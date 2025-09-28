@@ -7,15 +7,13 @@
         "core": "*"
     },
     "files": [
-        "main.ts",
-        "main.blocks",
         "spikerbit.ts"
     ],
     "testFiles": [
         "test.ts"
     ],
     "targetVersions": {
-        "target": "7.0.51",
+        "target": "8.0.16",
         "targetId": "microbit"
     },
     "supportedTargets": [
