@@ -131,8 +131,8 @@ Returns a array of the **raw recorded signal** from the internal buffer, sampled
 Key behaviour:
 - **Input (optional)**
   - the time window (in milliseconds) of past data to return.  
-  - Default = 3000 ms (≈3 seconds).  
-  - The maximum allowed value is 3000 ms, which corresponds to the buffer size.
+  - Default = 1000 ms (≈1 second).  
+  - The maximum allowed value is 1000 ms, which corresponds to the buffer size.
 - **Output**
   - An array of numbers, each element being one recorded sample.  
   - The length of the array is `durationMs / 4` (rounded down), since samples are collected every 4 ms.
@@ -142,7 +142,7 @@ Key behaviour:
     - **ECG** → raw heart signal  
     - **EEG** → raw EEG values 
 - **Buffer / limits**
-  - The internal buffer stores up to 750 samples (≈3 seconds). If `durationMs` is larger than what the buffer contains, the function just returns the available samples.
+  - The internal buffer stores up to 250 samples (≈1 second). If `durationMs` is larger than what the buffer contains, the function just returns the available samples.
 - **Edge cases**
   - If the buffer is empty (e.g., recording hasn’t started yet), the returned array will also be empty.
 
@@ -156,13 +156,13 @@ For EMG it returns max of power (envelope) of the signal. For EEG and ECG it ret
 Uses an internal buffer sampled at 250 Hz. 
 
 ```sig
-let maxDuringLastSecond = spikerbit.maxSignalInLast(1000);
+let maxDuringLastSecond = spikerbit.maxSignalInLast(950);
 ```
 #### `numPeaksInLast(durationMs: number): number`
 Returns the number of peaks in the signal for the specified duration in milliseconds.
 
 ```sig
-let numPeaks = spikerbit.numPeaksInLast(1000);
+let numPeaks = spikerbit.numPeaksInLast(950);
 ```
 #### Metadata (used for search, rendering)
 
