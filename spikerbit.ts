@@ -20,7 +20,7 @@ namespace spikerbit {
     let bpmHeart: number = 0
     let beatHeart: number = 0
     let heartBeatHandler: () => void = null;
-    const MAX_BUFFER_SIZE = 750;
+    const MAX_BUFFER_SIZE = 250;
     const NOISE_FLOOR = 580;
     const ENVELOPE_DECAY = 2;
     const ECG_TOP_THRESHOLD = 70
@@ -223,8 +223,40 @@ namespace spikerbit {
                     buffer.removeAt(0)
                 }
 
-                tempCalculationValue = lpfFilterSingleSample(tempCalculationValue)
-                tempCalculationValue = hpfFilterSingleSample(tempCalculationValue)
+                // tempCalculationValue = lpfFilterSingleSample(tempCalculationValue)
+                let y = (lpfCoefficients[0] * tempCalculationValue) +
+                    (lpfCoefficients[1] * lpfInputKeepBuffer[0]) +
+                    (lpfCoefficients[2] * lpfInputKeepBuffer[1]) -
+                    (lpfCoefficients[3] * lpfOutputKeepBuffer[0]) -
+                    (lpfCoefficients[4] * lpfOutputKeepBuffer[1]);
+
+                // Update the input buffer (shift the samples)
+                lpfInputKeepBuffer[1] = lpfInputKeepBuffer[0];
+                lpfInputKeepBuffer[0] = tempCalculationValue;
+
+                // Update the output buffer (shift the samples)
+                lpfOutputKeepBuffer[1] = lpfOutputKeepBuffer[0];
+                lpfOutputKeepBuffer[0] = y;
+                tempCalculationValue = y;
+
+
+                // tempCalculationValue = hpfFilterSingleSample(tempCalculationValue)
+
+                y = (hpfCoefficients[0] * tempCalculationValue) +
+                    (hpfCoefficients[1] * hpfInputKeepBuffer[0]) +
+                    (hpfCoefficients[2] * hpfInputKeepBuffer[1]) -
+                    (hpfCoefficients[3] * hpfOutputKeepBuffer[0]) -
+                    (hpfCoefficients[4] * hpfOutputKeepBuffer[1]);
+
+                // Update the input buffer (shift the samples)
+                hpfInputKeepBuffer[1] = hpfInputKeepBuffer[0];
+                hpfInputKeepBuffer[0] = tempCalculationValue;
+
+                // Update the output buffer (shift the samples)
+                hpfOutputKeepBuffer[1] = hpfOutputKeepBuffer[0];
+                hpfOutputKeepBuffer[0] = y;
+                tempCalculationValue = y;
+    
                 beatHeart = 0;
                 if (tempCalculationValue > ECG_TOP_THRESHOLD || tempCalculationValue < ECG_BOTTOM_THRESHOLD) {
                     let currentMillis = control.millis()
@@ -278,7 +310,23 @@ namespace spikerbit {
                     buffer.removeAt(0)
                 }
                 eegSignalPower = eegSignalPower * 0.99 + 0.01 * (Math.abs(tempCalculationValue - 512))
-                filteredValue = notchFilterSingleSample(tempCalculationValue)
+                
+                // Notch filtering at 10 HZ
+                filteredValue = (notchCoefficients[0] * tempCalculationValue) +
+                    (notchCoefficients[1] * notchInputKeepBuffer[0]) +
+                    (notchCoefficients[2] * notchInputKeepBuffer[1]) -
+                    (notchCoefficients[3] * notchOutputKeepBuffer[0]) -
+                    (notchCoefficients[4] * notchOutputKeepBuffer[1]);
+
+                // Update the input buffer (shift the samples)
+                notchInputKeepBuffer[1] = notchInputKeepBuffer[0];
+                notchInputKeepBuffer[0] = tempCalculationValue;
+
+                // Update the output buffer (shift the samples)
+                notchOutputKeepBuffer[1] = notchOutputKeepBuffer[0];
+                notchOutputKeepBuffer[0] = filteredValue;
+
+                // LPF 
                 eegNotchedSignalPower = eegNotchedSignalPower * 0.99 + 0.01 * (Math.abs(filteredValue - 512))
                 eegAlphaPower = (eegSignalPower - eegNotchedSignalPower) - BASELINE_ALPHA;
                 if (eegAlphaPower < 0) {
@@ -308,9 +356,7 @@ namespace spikerbit {
         pins.digitalWritePin(DigitalPin.P8, 0)
         pins.digitalWritePin(DigitalPin.P9, 0)
         if (notInitialized) {
-            control.inBackground(() => {
-                backgroundTask()
-            })
+            control.inBackground(backgroundTask)
             notInitialized = 0
         }
     }
@@ -350,9 +396,7 @@ namespace spikerbit {
         pins.digitalWritePin(DigitalPin.P8, 1)
         pins.digitalWritePin(DigitalPin.P9, 0)
         if (notInitialized) {
-            control.inBackground(() => {
-                backgroundTask()
-            })
+            control.inBackground(backgroundTask)
             notInitialized = 0
         }
     }
@@ -422,9 +466,7 @@ namespace spikerbit {
         pins.digitalWritePin(DigitalPin.P8, 0)
         pins.digitalWritePin(DigitalPin.P9, 1)
         if (notInitialized) {
-            control.inBackground(() => {
-                backgroundTask()
-            })
+            control.inBackground(backgroundTask)
             notInitialized = 0
         }
     }
@@ -484,13 +526,13 @@ namespace spikerbit {
     //% group="Helper Utility"
     //% weight=73
     //% block="signal block || in last $durationMs (ms)"
-    //% durationMs.defl=3000
+    //% durationMs.defl=1000
     //% help=spikerbit/signal-block
     export function signalBlock(durationMs?: number): number[] {
-        // Default window to 3000ms if not provided
-        if (durationMs == null) durationMs = 3000
+        // Default window to 1000ms if not provided
+        if (durationMs == null) durationMs = 1000
         if (durationMs < 0) durationMs = 0
-        if (durationMs > 3000) durationMs = 3000
+        if (durationMs > 1000) durationMs = 1000
 
         // Calculate number of samples (250Hz -> 4ms/sample)
         let numSamples = Math.floor(durationMs / 4);
