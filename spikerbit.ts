@@ -20,6 +20,7 @@ namespace spikerbit {
     let bpmHeart: number = 0
     let beatHeart: number = 0
     let heartBeatHandler: () => void = null;
+    
     const MAX_BUFFER_SIZE = 250;
     const NOISE_FLOOR = 580;
     const ENVELOPE_DECAY = 2;
@@ -213,9 +214,35 @@ namespace spikerbit {
     // Define your background function
     function backgroundTask(): void {
         while (true) {
-
+            
+            //remember state of P9 and set state that we want
+            let previousP9State = 0
+            
             lastSample = tempCalculationValue
+
+            
+            previousP9State = pins.digitalReadPin(DigitalPin.P9)
+            
+            if (signalType == Signal.Eeg) {
+                pins.digitalWritePin(DigitalPin.P9, 1)
+            }
+            else {
+                pins.digitalWritePin(DigitalPin.P9, 0);
+            }
+
             tempCalculationValue = pins.analogReadPin(AnalogPin.P1)
+
+            //restore previous state of P9
+            if (previousP9State>0)
+            {
+                pins.digitalWritePin(DigitalPin.P9, 1)
+            }
+            else
+            {
+                pins.digitalWritePin(DigitalPin.P9, 0)
+            }
+
+            //do the processing based on the signal type
             if (signalType == Signal.Ecg) {
                 buffer.push(tempCalculationValue);
 
