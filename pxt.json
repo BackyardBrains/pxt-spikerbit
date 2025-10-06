@@ -1,6 +1,6 @@
 {
     "name": "spikerbit",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "Backyard Brains spiker:bit extension for micro:bit MakeCode (EEG/EMG/ECG)",
     "license": "MIT",
     "dependencies": {
