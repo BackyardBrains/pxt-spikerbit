@@ -7,7 +7,8 @@
         "core": "*"
     },
     "files": [
-        "spikerbit.ts"
+        "spikerbit.ts",
+        "README.md"
     ],
     "testFiles": [
         "test.ts"
