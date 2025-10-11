@@ -24,7 +24,7 @@ This repository can be added as an **extension** in MakeCode.
 
 ## ~ hint
 
-Note for micro:bit V1 users:
+**Note for micro:bit V1 users:**
 On micro:bit V1 boards, you may notice a slight glow on some LEDs. This is due to shared use of certain pins (e.g., pin P9) between the LED matrix and the Spiker:Bit. This visual effect is harmless and does not affect the functionality of the Spiker:Bit or the micro:bit.
 
 ## ~
