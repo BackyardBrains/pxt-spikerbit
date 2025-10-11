@@ -552,7 +552,7 @@ namespace spikerbit {
 
     //% group="Helper Utility"
     //% weight=73
-    //% block="signal block || in last $durationMs (ms)"
+    //% block="signal block || in last $durationMs ms"
     //% durationMs.defl=1000
     //% help=spikerbit/signal-block
     export function signalBlock(durationMs?: number): number[] {
