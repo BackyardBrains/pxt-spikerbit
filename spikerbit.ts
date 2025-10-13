@@ -221,29 +221,32 @@ namespace spikerbit {
                 let previousP9State = 0
                 
                 lastSample = tempCalculationValue
-                
-                pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
-                previousP9State = pins.digitalReadPin(DigitalPin.P9)
-                
-                if (signalType == Signal.Eeg) {
-                    pins.digitalWritePin(DigitalPin.P9, 1)
+                if (control.hardwareVersion() == "1") 
+                {
+                    pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
+                    previousP9State = pins.digitalReadPin(DigitalPin.P9)
+                    
+                    if (signalType == Signal.Eeg) {
+                        pins.digitalWritePin(DigitalPin.P9, 1)
+                    }
+                    else {
+                        pins.digitalWritePin(DigitalPin.P9, 0);
+                    }
                 }
-                else {
-                    pins.digitalWritePin(DigitalPin.P9, 0);
-                }
-
                 tempCalculationValue = pins.analogReadPin(AnalogPin.P1)
 
-                //restore previous state of P9
-                if (previousP9State>0)
+                if (control.hardwareVersion() == "1") 
                 {
-                    pins.digitalWritePin(DigitalPin.P9, 1)
+                    //restore previous state of P9
+                    if (previousP9State>0)
+                    {
+                        pins.digitalWritePin(DigitalPin.P9, 1)
+                    }
+                    else
+                    {
+                        pins.digitalWritePin(DigitalPin.P9, 0)
+                    }
                 }
-                else
-                {
-                    pins.digitalWritePin(DigitalPin.P9, 0)
-                }
-
                 //do the processing based on the signal type
                 if (signalType == Signal.Ecg) {
                     buffer.push(tempCalculationValue);
@@ -252,7 +255,7 @@ namespace spikerbit {
                         buffer.removeAt(0)
                     }
 
-                    // tempCalculationValue = lpfFilterSingleSample(tempCalculationValue)
+                    // LP filter of signal
                     let y = (lpfCoefficients[0] * tempCalculationValue) +
                         (lpfCoefficients[1] * lpfInputKeepBuffer[0]) +
                         (lpfCoefficients[2] * lpfInputKeepBuffer[1]) -
@@ -269,8 +272,7 @@ namespace spikerbit {
                     tempCalculationValue = y;
 
 
-                    // tempCalculationValue = hpfFilterSingleSample(tempCalculationValue)
-
+                    // HP filter of signal
                     y = (hpfCoefficients[0] * tempCalculationValue) +
                         (hpfCoefficients[1] * hpfInputKeepBuffer[0]) +
                         (hpfCoefficients[2] * hpfInputKeepBuffer[1]) -
