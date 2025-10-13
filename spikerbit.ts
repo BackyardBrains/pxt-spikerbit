@@ -20,6 +20,7 @@ namespace spikerbit {
     let bpmHeart: number = 0
     let beatHeart: number = 0
     let heartBeatHandler: () => void = null;
+    let enableRecording = 0
     
     const MAX_BUFFER_SIZE = 250;
     const NOISE_FLOOR = 580;
@@ -214,153 +215,156 @@ namespace spikerbit {
     // Define your background function
     function backgroundTask(): void {
         while (true) {
-            
-            //remember state of P9 and set state that we want
-            let previousP9State = 0
-            
-            lastSample = tempCalculationValue
-
-            
-            previousP9State = pins.digitalReadPin(DigitalPin.P9)
-            
-            if (signalType == Signal.Eeg) {
-                pins.digitalWritePin(DigitalPin.P9, 1)
-            }
-            else {
-                pins.digitalWritePin(DigitalPin.P9, 0);
-            }
-
-            tempCalculationValue = pins.analogReadPin(AnalogPin.P1)
-
-            //restore previous state of P9
-            if (previousP9State>0)
+            if (enableRecording==1)
             {
-                pins.digitalWritePin(DigitalPin.P9, 1)
-            }
-            else
-            {
-                pins.digitalWritePin(DigitalPin.P9, 0)
-            }
-
-            //do the processing based on the signal type
-            if (signalType == Signal.Ecg) {
-                buffer.push(tempCalculationValue);
-
-                if (buffer.length > MAX_BUFFER_SIZE) {
-                    buffer.removeAt(0)
+                //remember state of P9 and set state that we want
+                let previousP9State = 0
+                
+                lastSample = tempCalculationValue
+                
+                pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
+                previousP9State = pins.digitalReadPin(DigitalPin.P9)
+                
+                if (signalType == Signal.Eeg) {
+                    pins.digitalWritePin(DigitalPin.P9, 1)
+                }
+                else {
+                    pins.digitalWritePin(DigitalPin.P9, 0);
                 }
 
-                // tempCalculationValue = lpfFilterSingleSample(tempCalculationValue)
-                let y = (lpfCoefficients[0] * tempCalculationValue) +
-                    (lpfCoefficients[1] * lpfInputKeepBuffer[0]) +
-                    (lpfCoefficients[2] * lpfInputKeepBuffer[1]) -
-                    (lpfCoefficients[3] * lpfOutputKeepBuffer[0]) -
-                    (lpfCoefficients[4] * lpfOutputKeepBuffer[1]);
+                tempCalculationValue = pins.analogReadPin(AnalogPin.P1)
 
-                // Update the input buffer (shift the samples)
-                lpfInputKeepBuffer[1] = lpfInputKeepBuffer[0];
-                lpfInputKeepBuffer[0] = tempCalculationValue;
+                //restore previous state of P9
+                if (previousP9State>0)
+                {
+                    pins.digitalWritePin(DigitalPin.P9, 1)
+                }
+                else
+                {
+                    pins.digitalWritePin(DigitalPin.P9, 0)
+                }
 
-                // Update the output buffer (shift the samples)
-                lpfOutputKeepBuffer[1] = lpfOutputKeepBuffer[0];
-                lpfOutputKeepBuffer[0] = y;
-                tempCalculationValue = y;
+                //do the processing based on the signal type
+                if (signalType == Signal.Ecg) {
+                    buffer.push(tempCalculationValue);
+
+                    if (buffer.length > MAX_BUFFER_SIZE) {
+                        buffer.removeAt(0)
+                    }
+
+                    // tempCalculationValue = lpfFilterSingleSample(tempCalculationValue)
+                    let y = (lpfCoefficients[0] * tempCalculationValue) +
+                        (lpfCoefficients[1] * lpfInputKeepBuffer[0]) +
+                        (lpfCoefficients[2] * lpfInputKeepBuffer[1]) -
+                        (lpfCoefficients[3] * lpfOutputKeepBuffer[0]) -
+                        (lpfCoefficients[4] * lpfOutputKeepBuffer[1]);
+
+                    // Update the input buffer (shift the samples)
+                    lpfInputKeepBuffer[1] = lpfInputKeepBuffer[0];
+                    lpfInputKeepBuffer[0] = tempCalculationValue;
+
+                    // Update the output buffer (shift the samples)
+                    lpfOutputKeepBuffer[1] = lpfOutputKeepBuffer[0];
+                    lpfOutputKeepBuffer[0] = y;
+                    tempCalculationValue = y;
 
 
-                // tempCalculationValue = hpfFilterSingleSample(tempCalculationValue)
+                    // tempCalculationValue = hpfFilterSingleSample(tempCalculationValue)
 
-                y = (hpfCoefficients[0] * tempCalculationValue) +
-                    (hpfCoefficients[1] * hpfInputKeepBuffer[0]) +
-                    (hpfCoefficients[2] * hpfInputKeepBuffer[1]) -
-                    (hpfCoefficients[3] * hpfOutputKeepBuffer[0]) -
-                    (hpfCoefficients[4] * hpfOutputKeepBuffer[1]);
+                    y = (hpfCoefficients[0] * tempCalculationValue) +
+                        (hpfCoefficients[1] * hpfInputKeepBuffer[0]) +
+                        (hpfCoefficients[2] * hpfInputKeepBuffer[1]) -
+                        (hpfCoefficients[3] * hpfOutputKeepBuffer[0]) -
+                        (hpfCoefficients[4] * hpfOutputKeepBuffer[1]);
 
-                // Update the input buffer (shift the samples)
-                hpfInputKeepBuffer[1] = hpfInputKeepBuffer[0];
-                hpfInputKeepBuffer[0] = tempCalculationValue;
+                    // Update the input buffer (shift the samples)
+                    hpfInputKeepBuffer[1] = hpfInputKeepBuffer[0];
+                    hpfInputKeepBuffer[0] = tempCalculationValue;
 
-                // Update the output buffer (shift the samples)
-                hpfOutputKeepBuffer[1] = hpfOutputKeepBuffer[0];
-                hpfOutputKeepBuffer[0] = y;
-                tempCalculationValue = y;
-    
-                beatHeart = 0;
-                if (tempCalculationValue > ECG_TOP_THRESHOLD || tempCalculationValue < ECG_BOTTOM_THRESHOLD) {
-                    let currentMillis = control.millis()
-                    if (ecgTimestamps.length > 0) {
-                        if ((currentMillis - ecgTimestamps[ecgTimestamps.length - 1]) > DEBOUNCE_PERIOD_ECG) {
+                    // Update the output buffer (shift the samples)
+                    hpfOutputKeepBuffer[1] = hpfOutputKeepBuffer[0];
+                    hpfOutputKeepBuffer[0] = y;
+                    tempCalculationValue = y;
+        
+                    beatHeart = 0;
+                    if (tempCalculationValue > ECG_TOP_THRESHOLD || tempCalculationValue < ECG_BOTTOM_THRESHOLD) {
+                        let currentMillis = control.millis()
+                        if (ecgTimestamps.length > 0) {
+                            if ((currentMillis - ecgTimestamps[ecgTimestamps.length - 1]) > DEBOUNCE_PERIOD_ECG) {
+                                ecgTimestamps.push(currentMillis)
+                                beatHeart = 1;
+                            }
+                        }
+                        else {
                             ecgTimestamps.push(currentMillis)
                             beatHeart = 1;
                         }
-                    }
-                    else {
-                        ecgTimestamps.push(currentMillis)
-                        beatHeart = 1;
-                    }
 
-                    if (ecgTimestamps.length > 3) {
-                        ecgTimestamps.removeAt(0)
-                        bpmHeart = (120000 / (ecgTimestamps[2] - ecgTimestamps[1] + ecgTimestamps[1] - ecgTimestamps[0])) | 0
+                        if (ecgTimestamps.length > 3) {
+                            ecgTimestamps.removeAt(0)
+                            bpmHeart = (120000 / (ecgTimestamps[2] - ecgTimestamps[1] + ecgTimestamps[1] - ecgTimestamps[0])) | 0
+
+                        }
 
                     }
 
+                    if (beatHeart && heartBeatHandler) {
+                        heartBeatHandler();
+                    }
                 }
+                else if (signalType == Signal.Emg) {
+                    tempCalculationValue = tempCalculationValue - NOISE_FLOOR;
+                    if (tempCalculationValue > 0) {
+                        if (tempCalculationValue > envelopeValue) {
+                            envelopeValue = tempCalculationValue;
+                        }
+                    }
 
-                if (beatHeart && heartBeatHandler) {
-                    heartBeatHandler();
+                    envelopeValue = envelopeValue - ENVELOPE_DECAY;
+
+                    if (envelopeValue < 0) {
+                        envelopeValue = 0;
+                    }
+
+                    buffer.push(envelopeValue);
+
+                    if (buffer.length > MAX_BUFFER_SIZE) {
+                        buffer.removeAt(0)
+                    }
                 }
-            }
-            else if (signalType == Signal.Emg) {
-                tempCalculationValue = tempCalculationValue - NOISE_FLOOR;
-                if (tempCalculationValue > 0) {
-                    if (tempCalculationValue > envelopeValue) {
-                        envelopeValue = tempCalculationValue;
+                else if (signalType == Signal.Eeg) {
+                    buffer.push(tempCalculationValue);
+
+                    if (buffer.length > MAX_BUFFER_SIZE) {
+                        buffer.removeAt(0)
+                    }
+                    eegSignalPower = eegSignalPower * 0.99 + 0.01 * (Math.abs(tempCalculationValue - 512))
+                    
+                    // Notch filtering at 10 HZ
+                    filteredValue = (notchCoefficients[0] * tempCalculationValue) +
+                        (notchCoefficients[1] * notchInputKeepBuffer[0]) +
+                        (notchCoefficients[2] * notchInputKeepBuffer[1]) -
+                        (notchCoefficients[3] * notchOutputKeepBuffer[0]) -
+                        (notchCoefficients[4] * notchOutputKeepBuffer[1]);
+
+                    // Update the input buffer (shift the samples)
+                    notchInputKeepBuffer[1] = notchInputKeepBuffer[0];
+                    notchInputKeepBuffer[0] = tempCalculationValue;
+
+                    // Update the output buffer (shift the samples)
+                    notchOutputKeepBuffer[1] = notchOutputKeepBuffer[0];
+                    notchOutputKeepBuffer[0] = filteredValue;
+
+                    // LPF 
+                    eegNotchedSignalPower = eegNotchedSignalPower * 0.99 + 0.01 * (Math.abs(filteredValue - 512))
+                    eegAlphaPower = (eegSignalPower - eegNotchedSignalPower) - BASELINE_ALPHA;
+                    if (eegAlphaPower < 0) {
+                        eegAlphaPower = 0;
                     }
                 }
 
-                envelopeValue = envelopeValue - ENVELOPE_DECAY;
-
-                if (envelopeValue < 0) {
-                    envelopeValue = 0;
-                }
-
-                buffer.push(envelopeValue);
-
-                if (buffer.length > MAX_BUFFER_SIZE) {
-                    buffer.removeAt(0)
-                }
-            }
-            else if (signalType == Signal.Eeg) {
-                buffer.push(tempCalculationValue);
-
-                if (buffer.length > MAX_BUFFER_SIZE) {
-                    buffer.removeAt(0)
-                }
-                eegSignalPower = eegSignalPower * 0.99 + 0.01 * (Math.abs(tempCalculationValue - 512))
                 
-                // Notch filtering at 10 HZ
-                filteredValue = (notchCoefficients[0] * tempCalculationValue) +
-                    (notchCoefficients[1] * notchInputKeepBuffer[0]) +
-                    (notchCoefficients[2] * notchInputKeepBuffer[1]) -
-                    (notchCoefficients[3] * notchOutputKeepBuffer[0]) -
-                    (notchCoefficients[4] * notchOutputKeepBuffer[1]);
-
-                // Update the input buffer (shift the samples)
-                notchInputKeepBuffer[1] = notchInputKeepBuffer[0];
-                notchInputKeepBuffer[0] = tempCalculationValue;
-
-                // Update the output buffer (shift the samples)
-                notchOutputKeepBuffer[1] = notchOutputKeepBuffer[0];
-                notchOutputKeepBuffer[0] = filteredValue;
-
-                // LPF 
-                eegNotchedSignalPower = eegNotchedSignalPower * 0.99 + 0.01 * (Math.abs(filteredValue - 512))
-                eegAlphaPower = (eegSignalPower - eegNotchedSignalPower) - BASELINE_ALPHA;
-                if (eegAlphaPower < 0) {
-                    eegAlphaPower = 0;
-                }
             }
-
             basic.pause(0)
         }
     }
@@ -377,6 +381,7 @@ namespace spikerbit {
     //% help=spikerbit/start-muscle-recording
     export function startMuscleRecording(): void {
         signalType = Signal.Emg;
+        enableRecording = 1
         // clear buffers on (re)start
         buffer = []
         ecgTimestamps = []
@@ -415,6 +420,7 @@ namespace spikerbit {
     //% help=spikerbit/start-heart-recording
     export function startHeartRecording(): void {
         signalType = Signal.Ecg;
+        enableRecording = 1
         // clear buffers on (re)start
         buffer = []
         ecgTimestamps = []
@@ -486,6 +492,7 @@ namespace spikerbit {
     //% help=spikerbit/start-brain-recording
     export function startBrainRecording(): void {
         signalType = Signal.Eeg;
+        enableRecording = 1
         // clear buffers on (re)start
         buffer = []
         ecgTimestamps = []
@@ -556,6 +563,9 @@ namespace spikerbit {
     //% durationMs.defl=1000
     //% help=spikerbit/signal-block
     export function signalBlock(durationMs?: number): number[] {
+        if (buffer.length == 0) {
+            return []
+        }
         // Default window to 1000ms if not provided
         if (durationMs == null) durationMs = 1000
         if (durationMs < 0) durationMs = 0
@@ -582,6 +592,9 @@ namespace spikerbit {
     //% help=spikerbit/max-signal-in-last
     export function maxSignalInLast(durationMs: number): number {
 
+        if (buffer.length == 0) {
+            return 0
+        }
         let numSamples = Math.floor(durationMs / 4);  // Calculate number of samples
 
         // Get only the first `numSamples` elements from `buffer`
@@ -605,6 +618,10 @@ namespace spikerbit {
     //% help=spikerbit/num-peaks-in-last
     export function numPeaksInLast(durationMs: number): number {
 
+        if (buffer.length==0)
+        {
+            return 0
+        }
         // Get only the first `numSamples` elements from `buffer`
         const numSamples = Math.floor(durationMs / 4);  // Calculate number of samples
         const bufferSlice = buffer.slice(Math.max(buffer.length - numSamples, 0));
@@ -656,12 +673,11 @@ namespace spikerbit {
     //% block="stop recording"
     //% help=spikerbit/stop-recording
     export function stopRecord(): void {
-        buffer = []
+        // buffer = []
         ecgTimestamps = []
         envelopeValue = 0
         bpmHeart = 0
-        pins.digitalWritePin(DigitalPin.P8, 0)
-        pins.digitalWritePin(DigitalPin.P9, 0)
+        enableRecording = 0
     }
 
 }
