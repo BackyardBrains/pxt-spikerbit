@@ -380,7 +380,6 @@ namespace spikerbit {
     //% group="Muscle"
     //% weight=41
     //% block="start muscle recording"
-    //% help=spikerbit/start-muscle-recording
     export function startMuscleRecording(): void {
         signalType = Signal.Emg;
         enableRecording = 1
@@ -402,7 +401,6 @@ namespace spikerbit {
     //% group="Muscle"
     //% weight=40
     //% block="muscle power signal"
-    //% help=spikerbit/muscle-power-signal
     export function musclePowerSignal(): number {
         if (signalType == Signal.Emg) {
             return envelopeValue;
@@ -419,7 +417,6 @@ namespace spikerbit {
     //% group="Heart"
     //% weight=53
     //% block="start heart recording"
-    //% help=spikerbit/start-heart-recording
     export function startHeartRecording(): void {
         signalType = Signal.Ecg;
         enableRecording = 1
@@ -445,7 +442,6 @@ namespace spikerbit {
     //% group="Heart"
     //% weight=52
     //% block="heart signal"
-    //% help=spikerbit/heart-signal
     export function heartSignal(): number {
         if (buffer.length > 0 && signalType == Signal.Ecg) {
             return buffer[buffer.length - 1];
@@ -462,7 +458,6 @@ namespace spikerbit {
     //% group="Heart"
     //% weight=51
     //% block="heart rate"
-    //% help=spikerbit/heart-rate
     export function heartRate(): number {
         if (signalType == Signal.Ecg) {
             return bpmHeart;
@@ -479,7 +474,6 @@ namespace spikerbit {
     //% group="Heart"
     //% weight=50
     //% block="on heartbeat"
-    //% help=spikerbit/on-heartbeat
     export function onHeartBeat(handler: () => void): void {
         heartBeatHandler = handler;
     }
@@ -491,7 +485,6 @@ namespace spikerbit {
     //% group="Brain"
     //% weight=62
     //% block="start brain recording"
-    //% help=spikerbit/start-brain-recording
     export function startBrainRecording(): void {
         signalType = Signal.Eeg;
         enableRecording = 1
@@ -514,7 +507,6 @@ namespace spikerbit {
     //% group="Brain"
     //% weight=61
     //% block="brain signal"
-    //% help=spikerbit/brain-signal
     export function brainSignal(): number {
         if (buffer.length > 0 && signalType == Signal.Eeg) {
             return buffer[buffer.length - 1];
@@ -531,7 +523,6 @@ namespace spikerbit {
     //% group="Brain"
     //% weight=60
     //% block="brain alpha power"
-    //% help=spikerbit/brain-alpha-power
     export function brainAlphaPower(): number {
         if (signalType == Signal.Eeg) {
             return eegAlphaPower;
@@ -549,7 +540,6 @@ namespace spikerbit {
     //% group="Helper Utility"
     //% weight=74
     //% block="print %value"
-    //% help=spikerbit/print
     export function print(value: number): void {
         serial.writeValue("Value", value);
     }
@@ -563,7 +553,6 @@ namespace spikerbit {
     //% weight=73
     //% block="signal block || in last $durationMs ms"
     //% durationMs.defl=1000
-    //% help=spikerbit/signal-block
     export function signalBlock(durationMs?: number): number[] {
         if (buffer.length == 0) {
             return []
@@ -591,7 +580,6 @@ namespace spikerbit {
     //% group="Helper Utility"
     //% weight=72
     //% block="max signal in last $durationMs ms"
-    //% help=spikerbit/max-signal-in-last
     export function maxSignalInLast(durationMs: number): number {
 
         if (buffer.length == 0) {
@@ -617,7 +605,6 @@ namespace spikerbit {
     //% group="Helper Utility"
     //% weight=71
     //% block="number of peaks in last $durationMs ms"
-    //% help=spikerbit/num-peaks-in-last
     export function numPeaksInLast(durationMs: number): number {
 
         if (buffer.length==0)
@@ -673,7 +660,6 @@ namespace spikerbit {
     //% group="Helper Utility"
     //% weight=70
     //% block="stop recording"
-    //% help=spikerbit/stop-recording
     export function stopRecord(): void {
         // buffer = []
         ecgTimestamps = []
