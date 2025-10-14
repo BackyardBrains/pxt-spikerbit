@@ -58,14 +58,15 @@ spikerbit.stopRecord()
 
 ### Muscle Group
 
-#### `startMuscleRecording()`
+#### `startMuscleRecording()` #spikerbit-startmusclerecording
+
 Starts recording muscle (EMG) signals.
 
 ```sig
 spikerbit.startMuscleRecording();
 ```
 
-#### `musclePowerSignal(): number`
+#### `musclePowerSignal(): number` #spikerbit-musclepowersignal
 Returns the last envelope value of the EMG signal.
 
 ```sig
@@ -76,21 +77,21 @@ let power = spikerbit.musclePowerSignal();
 
 ### Heart Group
 
-#### `startHeartRecording()`
+#### `startHeartRecording()` #spikerbit-startheartrecording
 Starts recording heart (ECG) signals.
 
 ```sig
 spikerbit.startHeartRecording();
 ```
 
-#### `heartSignal(): number`
+#### `heartSignal(): number` #spikerbit-heartsignal
 Returns the last measured ECG signal.
 
 ```sig
 let signal = spikerbit.heartSignal();
 ```
 
-#### `heartRate(): number`
+#### `heartRate(): number` #spikerbit-heartrate
 Returns the calculated heart rate based on the last two heart beats.
 
 ```sig
@@ -106,14 +107,14 @@ Starts recording brain (EEG) signals.
 spikerbit.startBrainRecording();
 ```
 
-#### `brainSignal(): number`
+#### `brainSignal(): number` #spikerbit-brainsignal
 Returns the last measured EEG signal.
 
 ```sig
 let signal = spikerbit.brainSignal();
 ```
 
-#### `brainAlphaPower(): number`
+#### `brainAlphaPower(): number` #spikerbit-brainalphapower
 Returns the alpha wave power of the EEG signal.
 
 ```sig
@@ -122,7 +123,7 @@ let alphaPower = spikerbit.brainAlphaPower();
 
 ### Helper Utility
 
-#### `print(value: number): void`
+#### `print(value: number): void` #spikerbit-print
 The `print` function sends a numeric value to the serial output with the label `"Value"`.  
 This allows students and teachers to easily record or visualize data in MakeCode Data Logger or any serial monitoring tool.  
 
@@ -132,7 +133,7 @@ You can use it to print measurements from any Spiker:Bit signal, such as the EMG
 spikerbit.print(spikerbit.heartRate());
 ```
 
-#### `signalBlock(): number[]`
+#### `signalBlock(): number[]` #spikerbit-signalblock
 Returns a array of the **raw recorded signal** from the internal buffer, sampled at 250 Hz (one value every 4 ms).  
 
 Key behaviour:
@@ -157,7 +158,7 @@ Key behaviour:
 let signalBlock = spikerbit.signalBlock();
 let shortSignalBlock = spikerbit.signalBlock(500);
 ```
-#### `maxSignalInLast(durationMs: number): number`
+#### `maxSignalInLast(durationMs: number): number` #spikerbit-maxsignalinlast
 Returns max value of signal for the specified duration in milliseconds.
 For EMG it returns max of power (envelope) of the signal. For EEG and ECG it returns max of raw signal. 
 Uses an internal buffer sampled at 250 Hz. 
@@ -165,12 +166,19 @@ Uses an internal buffer sampled at 250 Hz.
 ```sig
 let maxDuringLastSecond = spikerbit.maxSignalInLast(950);
 ```
-#### `numPeaksInLast(durationMs: number): number`
+#### `numPeaksInLast(durationMs: number): number` #spikerbit-numpeaksinlast
 Returns the number of peaks in the signal for the specified duration in milliseconds.
 
 ```sig
 let numPeaks = spikerbit.numPeaksInLast(950);
 ```
+### `stopRecord()` #spikerbit-stoprecord
+Stop recording and clear internal buffers.
+
+```sig
+stopRecord();
+```
+
 #### Metadata (used for search, rendering)
 
 * for PXT/microbit
